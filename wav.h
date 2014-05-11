@@ -2,14 +2,14 @@
 //  wav.h
 //  wavReader
 //
-//  Created by user on 5/2/14.
+//  Created by wyj on 5/2/14.
 //  Copyright (c) 2014 user. All rights reserved.
 //
 
 #ifndef wavReader_wav_h
 #define wavReader_wav_h
 
-#include "/Users/user/Documents/compile/wavReader/types.h"
+#include "types.h"
 #include <fstream>
 #include <iostream>
 #include <math.h>
@@ -20,8 +20,9 @@ const char df_wavId[4]={'f','m','t',' '};
 const char df_factId[4]={'f','a','c','t'};
 const char df_dataId[4]={'d','a','t','a'};
 const double PI=3.1415926;
+//////////////////////
 
-struct riff_Header  //struct name '_'+capital, var name no '_'
+struct riff_Header  //
 {
     char riffId[4]={'R','I','F','F'};
     u32 riffSize;//16 or 18
@@ -66,6 +67,7 @@ double am(int i)//fade in and fade out
     }
     else return 1.0;
 }
+//////////////////////
 
 class wavfile
 {
@@ -79,56 +81,11 @@ class wavfile
     data_Header datah;
     
 public:
-    void print_info()
-    {
-        if(st)
-        {
-            cout<<endl<<"head:";
-            for(int i=0;i<4;++i)cout<<riff.riffId[i];
-            cout<<endl<<"wave:";
-            for(int i=0;i<4;++i)cout<<wav.wavId[i];
-            cout<<endl<<"size:"<<wav.wavSize<<endl;
-            cout<<wav.Fmt.channel<<"channel(s) "<<wav.Fmt.sampleps<<"Hz "<<wav.Fmt.bpsample<<"bits"<<endl;
-        }
-        else cout<<endl<<"the file is not valid!"<<endl;
-    }
-    void chgaddr(char addr[])
-    {
-        if(st==1)
-        {wavin.close();
-        wavin.open(addr,ios::binary);
-        }
-    }
-    void put_data(short *ldata,short *rdata,int bufsize,int offs=44)
-    {
-        if(st==2)
-        {
-        wavin.seekp(offs,ios::beg);
-            for(int i=0;i<bufsize;++i)
-        {
-            wavin.write((char*)(ldata+i),2);
-            wavin.write((char*)(rdata+i),2);
-        }
-        }
-    }
-    void put_data(int btt,int snum,double *freq,short tnum[],int offs=44)
-    {
-        wavin.seekp(offs,ios::beg);
-        for(int i=0;i<snum;++i)
-        {
-            double freq0=*(freq+i);
-            double freq1=2*freq0;
-            double freq2=3*freq0;
-            double freq3=4*freq0;
-            double freq4=5*freq0;
-            for(int j=0;j<btt*tnum[i];++j)
-            {
-                short lrdata=am(j)*am(btt*tnum[i]-j)*8000*(0.8*sin(freq0*j)+0.5*sin(freq1*j)+0.4*sin(freq2*j)+0.1*sin(freq3*j+0.1*sin(freq4*j)));
-                wavin.write((char*)&lrdata,2);
-                wavin.write((char*)&lrdata,2);
-            }
-        }
-    }
+    void print_info();
+    void chgaddr(char addr[]);
+    
+    void put_data(short *ldata,short *rdata,int bufsize,int);//
+    void put_data(int btt,int snum,double *freq,short tnum[],int);
     void get_data(short *ldata,short *rdata,int bufsize,int offs)
     {
         if(st==1)
@@ -144,7 +101,7 @@ public:
         }
     }
         
-    wavfile(char addr[])//read
+    wavfile(char addr[])//read。。。。以后改用继承吧
     {
         wavin.open(addr,ios::binary|ios::in);
         
@@ -183,7 +140,7 @@ public:
         wav.Fmt.channel=channel;
         wav.Fmt.blockAlign=bpsample/8*channel;//4
         wav.Fmt.avgBps=sampleps*wav.Fmt.blockAlign;
-        wav.wavSize=16;//or 16
+        wav.wavSize=16;//or 18
         datah.dataSize=samplenum*wav.Fmt.blockAlign;
         riff.riffSize=datah.dataSize+wav.wavSize+20;
         st=2;
@@ -198,6 +155,55 @@ public:
         wavin.close();
     }
 };
-
+void wavfile::chgaddr(char addr[])
+{
+    if(st==1)
+    {wavin.close();
+        wavin.open(addr,ios::binary);
+    }
+}
+void wavfile::print_info()
+{
+    if(st)
+    {
+        cout<<endl<<"head:";
+        for(int i=0;i<4;++i)cout<<riff.riffId[i];
+        cout<<endl<<"wave:";
+        for(int i=0;i<4;++i)cout<<wav.wavId[i];
+        cout<<endl<<"size:"<<wav.wavSize<<endl;
+        cout<<wav.Fmt.channel<<"channel(s) "<<wav.Fmt.sampleps<<"Hz "<<wav.Fmt.bpsample<<"bits"<<endl;
+    }
+    else cout<<endl<<"the file is not valid!"<<endl;
+}
+void wavfile::put_data(short *ldata,short *rdata,int bufsize,int offs=44)
+{
+    if(st==2)
+    {
+        wavin.seekp(offs,ios::beg);
+        for(int i=0;i<bufsize;++i)
+        {
+            wavin.write((char*)(ldata+i),2);
+            wavin.write((char*)(rdata+i),2);
+        }
+    }
+}
+void wavfile::put_data(int btt,int snum,double *freq,short tnum[],int offs=44)
+{
+    wavin.seekp(offs,ios::beg);
+    for(int i=0;i<snum;++i)
+    {
+        double freq0=*(freq+i);
+        double freq1=2*freq0;
+        double freq2=3*freq0;
+        double freq3=4*freq0;
+        double freq4=5*freq0;
+        for(int j=0;j<btt*tnum[i];++j)
+        {
+            short lrdata=am(j)*am(btt*tnum[i]-j)*8000*(0.8*sin(freq0*j)+0.5*sin(freq1*j)+0.4*sin(freq2*j)+0.1*sin(freq3*j+0.1*sin(freq4*j)));
+            wavin.write((char*)&lrdata,2);
+            wavin.write((char*)&lrdata,2);
+        }
+    }
+}
 
 #endif
