@@ -32,16 +32,17 @@ int main(int argc, char * argv[])
     char in1addr[]="sine.wav";//输出
     char in2addr[]="sine.txt";//输入文件
     
-    short snum;
-    short tlen;
+    short snum;// number of scores
+    short tlen;// total duration of scores
     
     fstream wavin2;
     wavin2.open(in2addr,ios::in);
     wavin2>>tlen>>snum;
+	
     cout<<"time:"<<tlen*bttfrac<<"s; "<<snum;
-    short *frnum = new short[snum];
-    short *tnum = new short[snum];
-    double *freq=new double[snum];
+    short *frnum = new short[snum]; //score frequency number
+    short *tnum = new short[snum]; 	//score duration
+    double *freq=new double[snum]; 	//score frequency value
     for(int i=0;i<snum;++i)
     {
         wavin2>>frnum[i]>>tnum[i];
