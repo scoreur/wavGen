@@ -35,22 +35,9 @@ int main(int argc, char * argv[])
       
     fstream wavin2;
     wavin2.open(in2addr,ios::in);
-	
-//vector<short> v_frnum;
 	vector<short> v_tnum;
 	vector<double> v_freq;
 	
-//    wavin2>>tlen>>snum;
-    //short *frnum = new short[snum]; //score frequency number
-    //short *tnum = new short[snum]; 	//score duration
-    //double *freq=new double[snum]; 	//score frequency value
-	/*
-    for(int i=0;i<snum;++i)
-    {
-        wavin2>>frnum[i]>>tnum[i];
-        freq[i]=fr(frnum[i]);
-    }
-	*/
 	short f_i,t_i;
 	while(!wavin2.eof())
 	{
@@ -69,7 +56,6 @@ for(vector<short>::iterator j=v_tnum.begin();j!=v_tnum.end();++j)
     
     wavfile wavin1(in1addr,tlen*btt);
     wavin1.print_info();
-    //wavin1.put_data(btt,snum,freq,tnum);
     wavin1.put_data(btt,snum,v_freq,v_tnum);
     
     return 0;
