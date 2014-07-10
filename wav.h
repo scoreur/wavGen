@@ -12,6 +12,7 @@
 #include "types.h"
 #include <fstream>
 #include <iostream>
+#include <vector>
 #include <math.h>
 using namespace std;
 const char df_riffId[4]={'R','I','F','F'};
@@ -85,7 +86,7 @@ public:
     void chgaddr(char addr[]);
     
     void put_data(short *ldata,short *rdata,int bufsize,int);//
-    void put_data(int btt,int snum,double *freq,short tnum[],int);
+    void put_data(int btt,int snum,vector<double> &v_freq,vector<short> &v_tnum,int);
     void get_data(short *ldata,short *rdata,int bufsize,int offs)
     {
         if(st==1)
@@ -187,19 +188,19 @@ void wavfile::put_data(short *ldata,short *rdata,int bufsize,int offs=44)
         }
     }
 }
-void wavfile::put_data(int btt,int snum,double *freq,short tnum[],int offs=44)
-{
+void wavfile::put_data(int btt,int snum,vector<double> &v_freq,vector<short> &v_tnum,int offs=44)
+{	
     wavin.seekp(offs,ios::beg);
     for(int i=0;i<snum;++i)
     {
-        double freq0=*(freq+i);
+        double freq0=v_freq[i];
         double freq1=2*freq0;
         double freq2=3*freq0;
         double freq3=4*freq0;
         double freq4=5*freq0;
-        for(int j=0;j<btt*tnum[i];++j)
+        for(int j=0;j<btt*v_tnum[i];++j)
         {
-            short lrdata=am(j)*am(btt*tnum[i]-j)*8000*(0.8*sin(freq0*j)+0.5*sin(freq1*j)+0.4*sin(freq2*j)+0.1*sin(freq3*j+0.1*sin(freq4*j)));
+            short lrdata=am(j)*am(btt*v_tnum[i]-j)*8000*(0.8*sin(freq0*j)+0.5*sin(freq1*j)+0.4*sin(freq2*j)+0.1*sin(freq3*j+0.1*sin(freq4*j)));
             wavin.write((char*)&lrdata,2);
             wavin.write((char*)&lrdata,2);
         }

@@ -9,6 +9,7 @@
 
 #include <math.h>
 #include <fstream>
+#include <vector>
 #include "wav.h"
 
 using namespace std;
@@ -31,27 +32,31 @@ int main(int argc, char * argv[])
     
     char in1addr[]="sine.wav";//输出
     char in2addr[]="sine.txt";//输入文件
-    
-    short snum;
-    short tlen;
-    
+      
     fstream wavin2;
     wavin2.open(in2addr,ios::in);
-    wavin2>>tlen>>snum;
-    cout<<"time:"<<tlen*bttfrac<<"s; "<<snum;
-    short *frnum = new short[snum];
-    short *tnum = new short[snum];
-    double *freq=new double[snum];
-    for(int i=0;i<snum;++i)
-    {
-        wavin2>>frnum[i]>>tnum[i];
-        freq[i]=fr(frnum[i]);
-    }
+	vector<short> v_tnum;
+	vector<double> v_freq;
+	
+	short f_i,t_i;
+	while(!wavin2.eof())
+	{
+		wavin2>>f_i>>t_i;
+		v_freq.push_back(fr(f_i));
+		v_tnum.push_back(t_i);
+	}
     wavin2.close();
+	
+short snum=v_tnum.size();// number of scores
+short tlen=0;// total duration of scores	
+for(vector<short>::iterator j=v_tnum.begin();j!=v_tnum.end();++j)
+    tlen += *j;
+	
+    cout<<"time:"<<tlen*bttfrac<<"s; "<<snum;
     
     wavfile wavin1(in1addr,tlen*btt);
     wavin1.print_info();
-    wavin1.put_data(btt,snum,freq,tnum);
+    wavin1.put_data(btt,snum,v_freq,v_tnum);
     
     return 0;
 }

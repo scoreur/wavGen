@@ -9,12 +9,10 @@ wav file generating
 1. Run main.exe, the wave file  `sine.wav` will be generated.
 
 ##Score structure:
-1. Two integers at the beginning, for wave duration and the number of scores;
-1. Two integers for each score, for pitch and duration respectively.
+Two integers each line for each score; one for pitch and the other one for duration.
 
 ##Example:
 ```
-16 14
 1 1
 1 1 
 8 1
