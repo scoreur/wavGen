@@ -24,8 +24,19 @@ int main(int argc, char * argv[])
     WavOut wavout(wavsrc);
     wavout.score2wav(scoresrc);
     
-    short frtest,offtest; int lentest;
+    //test wav to score
     WavIn wavin(wavsrc);
+    fr_Spectrum sp;
+    short ldata[8000];
+    short rdata[8000];
+    for(int k=0;k<40;++k){
+        wavin.get_data(ldata,rdata, 8000,16000*k+8044);
+        sp.update(rdata+4000,64);
+        std::cout<<sp.maxnote<<":"<<sp.maxpeak<<";";
+        
+    }
+    //test the main note
+
     return 0;
 }
 

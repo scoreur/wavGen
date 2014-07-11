@@ -13,6 +13,11 @@
 #include "complex.h"
 #include <fstream>
 #include <iostream>
+#include <vector>
+
+#define NOTENUM 88 //Piano
+#define LOWEST_NOTE -48
+#define HIGHEST_NOTE 39
 
 //default
 const char df_riffId[4]={'R','I','F','F'};
@@ -20,9 +25,32 @@ const char df_riffFmt[4]={'W','A','V','E'};
 const char df_wavId[4]={'f','m','t',' '};
 const char df_factId[4]={'f','a','c','t'};
 const char df_dataId[4]={'d','a','t','a'};
-const int sampleps0=44100;//默认采样数
-const double fr0= 440*2*PI/sampleps0;//标准音（圆）频率除以采样数
 //
+
+
+class fr_Spectrum{
+public:
+    double spect[ NOTENUM ]={0};
+    const double noise=100.0;
+    std::vector<short> peaks;//ranging from -48 to 39
+    
+    short maxnote= LOWEST_NOTE-1;
+    double maxpeak= 0.0;
+   
+    void update(short *data,short samplesize){
+        maxnote= LOWEST_NOTE-1;
+        maxpeak= 0.0;
+        for(int i=0;i<88;++i){
+            spect[i]= fourier0(data, samplesize, fr(i-48))[0].norm();
+            if(maxpeak<spect[i]){maxpeak=spect[i];maxnote=i-48;}
+        }
+    }
+    void peaking();//finding sub peaks
+    
+};
+void fr_Spectrum::peaking(){
+    
+}
 
 struct riff_Header  //
 {
@@ -63,7 +91,7 @@ struct data_Header
 
 const int offs0=sizeof(riff_Header)+sizeof(wav_Block)-4+sizeof(data_Header);//44
 
-double am(int i)//fade in and fade out
+double amp_fade(int i)//fade in and fade out
 {
     if(i<5000)
     {double k=1-cos(PI*i/5000);
@@ -72,10 +100,6 @@ double am(int i)//fade in and fade out
     else return 1.0;
 }
 
-double fr(int frnum)//音数与频率换算
-{
-    return fr0*pow(2,frnum/12.0);
-}
 
 
 //////////////////////
@@ -213,13 +237,15 @@ void WavOut::put_data(int btt,int snum,double *freq,short tnum[],int offs=offs0)
     for(int i=0;i<snum;++i)
     {
         double freq0=*(freq+i);
-        double freq1=2*freq0;
+        double freq1=2*freq0;//泛音
         double freq2=3*freq0;
         double freq3=4*freq0;
-        double freq4=5*freq0;
+       
+        short lrdata;
         for(int j=0;j<btt*tnum[i];++j)
         {
-            short lrdata=am(j)*am(btt*tnum[i]-j)*8000*(0.8*sin(freq0*j)+0.5*sin(freq1*j)+0.4*sin(freq2*j)+0.1*sin(freq3*j+0.1*sin(freq4*j)));
+            lrdata=amp_fade(j)*amp_fade(btt*tnum[i]-j)*8000;
+            lrdata=lrdata*(0.8*sin(freq0*j)+0.4*sin(freq1*j)+0.3*sin(freq2*j)+0.1*sin(freq3*j));
             wavstream.write((char*)&lrdata,2);
             wavstream.write((char*)&lrdata,2);
         }
@@ -260,7 +286,7 @@ void WavOut::score2wav(char scoresrc[]){
 void wav2score(char scoresrc[]){
     
 }
-void WavOut::chgsrc(char src[])
+void WavOut::chgsrc(char src[])//change to a new file
 {
     if(st)
     {wavstream.close();
