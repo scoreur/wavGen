@@ -24,8 +24,6 @@ int main(int argc, char * argv[])
     WavOut wavout(wavsrc);
     wavout.score2wav(scoresrc);
     
-    short frtest,offtest; int lentest;
-    WavIn wavin(wavsrc);
     return 0;
 }
 
