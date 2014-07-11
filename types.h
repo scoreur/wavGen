@@ -1,9 +1,9 @@
 //
 //  types.h
-//  wavReader
+//  waveur
 //
 //  Created by user on 5/2/14.
-//  Copyright (c) 2014 user. All rights reserved.
+//  Copyright (c) 2014 scoreur. All rights reserved.
 //
 
 #ifndef wavReader_types_h
