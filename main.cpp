@@ -24,6 +24,7 @@ int main(int argc, char * argv[])
     WavOut wavout(wavsrc);
     wavout.score2wav(scoresrc);
     
+<<<<<<< HEAD
     //test wav to score
     WavIn wavin(wavsrc);
     fr_Spectrum sp;
@@ -37,6 +38,8 @@ int main(int argc, char * argv[])
     }
     //test the main note
 
+=======
+>>>>>>> FETCH_HEAD
     return 0;
 }
 
