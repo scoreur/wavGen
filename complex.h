@@ -8,8 +8,7 @@
 
 #ifndef _complex_h
 #define _complex_h
-#include <iostream>
-#include <math.h>
+#include <cmath>
 
 const double ZERO=1e-10;
 const double INFITY=1.79e+308;
@@ -33,10 +32,10 @@ class Complex{
 public:
     double x,y;
     
-    double norm(){
+    double norm(){//复数模长
         return sqrt(x*x+y*y);
     }
-    double angle(){
+    double angle(){//复数辐角，-PI～PI
         double temp=0.0;
         switch(sgn(x)){
             case -1:
@@ -63,49 +62,12 @@ public:
         if(mode==0){
             x=c1; y=c2;
         }
-        else{
+        else{//极坐标赋值
             x=c1*cos(c2);
             y=c1*sin(c2);
         }
     }
 };
 
-Complex *fourier0(short *data, int samplesize, double freq1,  short frsize=1, short *freq=NULL){//4*2PI
-   
-    double delta_i=8*PI/freq1/samplesize;
-    
-    Complex *amp_cp=new Complex[frsize];
-    
-    double *sin_temp=new double[samplesize];
-    double *cos_temp=new double[samplesize];
-    short *sampledata=new short[samplesize];
-    double amp_cos=0.0,amp_sin=0.0;
-    double i0=(delta_i*samplesize/2.0);//from middle
-    int i=-(int)i0;
-    for(int j=0;j<samplesize;++j){
-        i=(int)(delta_i*j-i0);
-        sampledata[j]=*(data+i);
-        sin_temp[j]=sin(freq1*i);
-        cos_temp[j]=cos(freq1*i);
-        amp_cos+=(double)(sampledata[j]*cos_temp[j]);
-        amp_sin+=(double)(sampledata[j]*sin_temp[j]);
-    }
-    amp_cp[0].x=amp_cos/samplesize*2;
-    amp_cp[0].y=amp_sin/samplesize*2;
-    
-    amp_cos=0.0;amp_sin=0.0;
-
-    for(i=1;i<frsize;++i){
-        for(int j=0;j<samplesize;++j){
-            amp_cos+=(double)(sampledata[j]*cos_temp[(j*freq[i])%samplesize]);
-            amp_sin+=(double)(sampledata[j]*sin_temp[(j*freq[i])%samplesize]);
-        }
-        amp_cp[i].x=amp_cos/samplesize*2;
-        amp_cp[i].y=amp_sin/samplesize*2;
-    }
-    delete []sin_temp; delete []cos_temp; delete []sampledata;
-    return amp_cp;
-    
-}
 
 #endif

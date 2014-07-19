@@ -10,9 +10,7 @@
 #include <string>
 #include "wav.h"
 
-int main(int argc, char * argv[])
-{
-    
+void test_score2wav(){
     char wavsrc[21]="1.wav";//output,default 1.wav
     char scoresrc[21]="1.txt";//input data,default 1.txt
     
@@ -20,26 +18,36 @@ int main(int argc, char * argv[])
     std::cin>>scoresrc;
     std::cout<<"please input the wave file name (<20 letters):"<<std::endl;
     std::cin>>wavsrc;
-
+    
     WavOut wavout(wavsrc);
     wavout.score2wav(scoresrc);
+    std::cout<<"score to wav success!";
+}
+void test_wav2score(){
+    char wavsrc[21]="1.wav";//output,default 1.wav
+    std::cout<<"please input the wave file name (<20 letters):"<<std::endl;
+    std::cin>>wavsrc;
     
-<<<<<<< HEAD
-    //test wav to score
     WavIn wavin(wavsrc);
-    fr_Spectrum sp;
-    short ldata[8000];
-    short rdata[8000];
-    for(int k=0;k<40;++k){
-        wavin.get_data(ldata,rdata, 8000,16000*k+8044);
+    freqSpectrum sp;
+    short ldata[160000];
+    short rdata[160000];
+    wavin.get_data(ldata,rdata, 160000,44);
+    std::cout<<"beats per minute: "<<60.0/(find_beat(ldata, 160000,200)/(float)sampleps0);
+    /*
+    for(int k=0;k<20;++k){
+        wavin.get_data(ldata,rdata, 16000,16000*k+6044);
         sp.update(rdata+4000,64);
-        std::cout<<sp.maxnote<<":"<<sp.maxpeak<<";";
-        
-    }
-    //test the main note
+        std::cout<<sp.peaks.size()<<","<<sp.maxpeak<<","<<","<<sp.avg<<","<<sp.maxnote<<","<<sp.norm<<std::endl;
+    }*/
+}
 
-=======
->>>>>>> FETCH_HEAD
+int main(int argc, char * argv[])
+{
+    test_score2wav();
+    test_wav2score();
+        
+    
     return 0;
 }
 
