@@ -1,27 +1,23 @@
 //
-//  spectrum.h
+//  spectrum.cpp
 //  
 //
-//  Created by wyj on 7/15/14.
+//  Created by wyj on 7/23/14.
 //
 //
 
-#ifndef _spectrum_h
-#define _spectrum_h
+#include "spectrum.h"
+#include <cmath>
 
-#include "complex.h"
-#include <vector>
-//#include <iostream>//for test
+float fr(int frnum, float sampleps)//音数与频率换算
+{
+    if( LOWEST_NOTE<=frnum && frnum<= HIGHEST_NOTE)
+        return 2*PI/sampleps * freq_piano[frnum+48];
+    else
+        return 0.0;
+}
 
-#define NOTENUM (88) //Piano音符数目
-#define LOWEST_NOTE (-48)
-#define HIGHEST_NOTE (39)
-#define NOISE (100.0)
-
-
-//频域分析
-
-Complex *fourier0(short *data, int samplesize, double freq1,  short frsize=1, short *freq=NULL){//4倍周期取样
+Complex* fourier0(short *data, int samplesize, double freq1,  short frsize, short *freq){//4倍周期取样
     
     double delta_i=8*PI/freq1/samplesize;//采样间隔
     
@@ -59,24 +55,6 @@ Complex *fourier0(short *data, int samplesize, double freq1,  short frsize=1, sh
     
 }
 
-
-class freqSpectrum{//piano频谱分布类型
-public:
-    double spectrum[ NOTENUM ]={0};//amplitude for each note
-    double noise= NOISE;
-    std::vector<short> peaks;//ranging from LOWEST_NOTE=-48 to HIGHEST_NOTE=39, 440Hz=0
-    
-    
-    short maxnote= LOWEST_NOTE-1;//主频率对应音数
-    double maxpeak= 0.0;//主峰值
-    double avg= 0.0;//辐度均值
-    double norm=0.0;//方均根
-    
-    void update(short*,short);
-    void peaking(double threshold=0.5);//finding sub peaks
-    
-};
-
 void freqSpectrum::update(short *data,short samplesize){
     avg= 0.0;
     noise= NOISE;
@@ -95,6 +73,7 @@ void freqSpectrum::update(short *data,short samplesize){
     if(noise<0.5*NOISE){noise=0.4*NOISE;}
     peaking();
 }
+
 void freqSpectrum::peaking(double threshold){
     peaks.clear();
     for(short i=2;i<NOTENUM-2;++i){
@@ -108,6 +87,7 @@ void freqSpectrum::peaking(double threshold){
     }
     
 }
+
 double similar(freqSpectrum fs1, freqSpectrum fs2){//频谱相似程度
     double s=0.0;
     for(int i=0;i<NOTENUM;++i){
@@ -117,9 +97,7 @@ double similar(freqSpectrum fs1, freqSpectrum fs2){//频谱相似程度
     
 }
 
-
-//时域分析
-int find_beat(short *data, int datasize, int accuracy=500){//求每拍对应采样数
+int find_beat(short *data, int datasize, int accuracy){//求每拍对应采样数
     const int windowsize=1000;
     int samplesize=(datasize-windowsize)/accuracy;
     double *st_amp=new double[samplesize];
@@ -203,4 +181,3 @@ int find_beat(short *data, int datasize, int accuracy=500){//求每拍对应采�
     return (int)(min_beat[error_min_i]*accuracy);
 }
 
-#endif

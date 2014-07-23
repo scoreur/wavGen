@@ -1,0 +1,202 @@
+//
+//  wav.cpp
+//  
+//
+//  Created by user on 7/23/14.
+//
+//
+
+#include "wav.h"
+
+double amp_fade(int i, int fade_range)//fade-in and fade-out effect
+{
+    if(i<fade_range)
+    {
+        double k=1-cos(i*PI/fade_range);
+        return k/2;
+    }
+    else return 1.0;
+}
+
+WavIn::WavIn(char src[])//read
+{
+    wavstream.open(src,std::ios::binary|std::ios::in);
+    
+    wavstream.read((char*)&riff,sizeof(riff_Header));
+    if(*(u32*)riff.riffId!=*(u32*)df_riffId)
+    {
+        std::cout<<"not riff file!"<<std::endl;
+        wavstream.close();
+        st=false;
+    }
+    else
+    {
+        wavstream.read((char*)&wav,sizeof(wav_Block));
+        if(*(u32*)wav.wavId!=*(u32*)df_wavId)
+        {
+            std::cout<<"not wav file!"<<std::endl;
+            wavstream.close();
+            st=false;
+        }
+        else
+        {
+            if(wav.wavSize==16)wavstream.seekg(-2,std::ios::cur);
+            st=true;
+        }
+    }
+}
+
+WavOut::WavOut(char src[], u32 sampleps, u16 bpsample, u16 channel)
+{
+    wavstream.open(src,std::ios::binary|std::ios::out);
+    st=true;
+    
+    wav.Fmt.bpsample=bpsample;
+    wav.Fmt.sampleps=sampleps;
+    wav.Fmt.channel=channel;
+    wav.Fmt.blockAlign=bpsample/8*channel;//4
+    wav.Fmt.avgBps=sampleps*wav.Fmt.blockAlign;
+    wav.wavSize=16;//or 18
+    datah.dataSize=0;//change when appending
+    riff.riffSize=datah.dataSize+wav.wavSize+20;//change when appending
+    
+    wavstream.seekp(0,std::ios::beg);
+    wavstream.write((char*)&riff,sizeof(riff_Header));
+    wavstream.write((char*)&wav,sizeof(wav_Block)-4);
+    wavstream.write((char*)&datah,sizeof(data_Header));
+}
+
+void WavFile::print_info()
+{
+    if(st)
+    {
+        std::cout<<std::endl<<"head:";
+        for(int i=0;i<4;++i)std::cout<<riff.riffId[i];
+        std::cout<<std::endl<<"wave:";
+        for(int i=0;i<4;++i)std::cout<<wav.wavId[i];
+        std::cout<<std::endl<<"size:"<<wav.wavSize<<std::endl;
+        std::cout<<wav.Fmt.channel<<"channel(s) "<<wav.Fmt.sampleps<<"Hz "<<wav.Fmt.bpsample<<"bits"<<std::endl;
+    }
+    else std::cout<<std::endl<<"the file is not valid!"<<std::endl;
+}
+void WavIn::get_data(short *ldata, short *rdata, int bufsize, int offs)//copy directly
+{
+    if(st)
+    {
+        int i=0;
+        wavstream.seekg(offs,std::ios::beg);
+        while(i<bufsize)
+        {
+            wavstream.read((char*)(ldata+i),2);//left channel
+            wavstream.read((char*)(rdata+i),2);//right channel
+            ++i;
+        }
+    }
+}
+
+void WavOut::put_data(short *ldata,short *rdata,int bufsize,int offs=offs0)
+{
+    wavstream.seekp(offs,std::ios::beg);
+    for(int i=0;i<bufsize;++i)
+    {
+        wavstream.write((char*)(ldata+i),2);
+        wavstream.write((char*)(rdata+i),2);
+    }
+    
+}
+void WavOut::put_data(int btt,int snum,double *freq,short tnum[],int offs=offs0)
+{
+    wavstream.seekp(offs,std::ios::beg);
+    for(int i=0;i<snum;++i)
+    {
+        double freq0=*(freq+i);
+        double freq1=2*freq0;//泛音
+        double freq2=3*freq0;
+        double freq3=4*freq0;
+        
+        short data,lrdata;
+        for(int j=0;j<btt*tnum[i];++j)
+        {
+            data=amp_fade(j)*amp_fade(btt*tnum[i]-j)*8000;
+            lrdata=data*(0.8*sin(freq0*j)+0.4*sin(freq1*j)+0.3*sin(freq2*j)+0.1*sin(freq3*j));//left channel
+            wavstream.write((char*)&lrdata,2);
+            lrdata=data*(0.8*cos(freq0*j)+0.4*cos(freq1*j)+0.3*cos(freq2*j)+0.1*cos(freq3*j));//right channel
+            wavstream.write((char*)&lrdata,2);
+        }
+    }
+}
+int WavOut::score2wav(char scoresrc[]){
+    short snum;
+    short tlen;
+    short beatspm;
+    std::fstream scorefile;
+    scorefile.open(scoresrc,std::ios::in);
+    scorefile>>tlen>>snum>>beatspm;
+    int samplepb=sampleps0*60.0/beatspm;//每拍采样数
+    short *frnum = new short[snum];
+    short *tnum = new short[snum];
+    double *freq=new double[snum];
+    for(int i=0;i<snum;++i)
+    {
+        scorefile>>frnum[i]>>tnum[i];
+        freq[i]=fr(frnum[i]);
+    }
+    scorefile.close();
+    
+    datah.dataSize=tlen*samplepb*wav.Fmt.blockAlign;//change when appending
+    riff.riffSize=datah.dataSize+wav.wavSize+20;//change when appending
+    wavstream.seekp(0,std::ios::beg);
+    wavstream.write((char*)&riff,sizeof(riff_Header));
+    wavstream.write((char*)&wav,sizeof(wav_Block)-4);
+    wavstream.write((char*)&datah,sizeof(data_Header));
+    put_data(samplepb,snum,freq,tnum);
+    
+    delete []frnum;delete []tnum; delete []freq;
+    
+    std::cout<<"Duration:"<<tlen*60.0/beatspm<<"s; Beats: "<<snum;
+    print_info();
+    return 1;
+    
+}
+int WavIn::wav2score(char scoresrc[]){//to be continued
+    
+    freqSpectrum sp;
+    short ldata[160000];
+    short rdata[160000];
+    get_data(ldata,rdata, 160000,44);
+    std::cout<<"beats per minute: "<<60.0/(find_beat(ldata, 160000,200)/(float)sampleps0);
+    
+    /*
+     std::fstream scorefile;
+     scorefile.open(scoresrc,std::ios::out);
+     
+     scorefile.close();
+     */
+    
+    
+    /*
+     for(int k=0;k<20;++k){
+     wavin.get_data(ldata,rdata, 16000,16000*k+6044);
+     sp.update(rdata+4000,64);
+     std::cout<<sp.peaks.size()<<","<<sp.maxpeak<<","<<","<<sp.avg<<","<<sp.maxnote<<","<<sp.norm<<std::endl;
+     }*/
+    
+    return 1;
+}
+void WavOut::chgsrc(char src[])//change to a new file
+{
+    if(st)
+    {wavstream.close();
+        wavstream.open(src,std::ios::binary|std::ios::out);
+        
+        datah.dataSize=0;//change when appending
+        riff.riffSize=datah.dataSize+wav.wavSize+20;//change when appending
+        wavstream.seekp(0,std::ios::beg);
+        wavstream.write((char*)&riff,sizeof(riff_Header));
+        wavstream.write((char*)&wav,sizeof(wav_Block)-4);
+        wavstream.write((char*)&datah,sizeof(data_Header));
+        
+    }
+}
+
+
