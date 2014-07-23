@@ -11,17 +11,11 @@ score-to-wavefile and wavefile-to-score.
 
 ##Usage:
 1. Launch Terminal, navigate to the directory holding main.cpp and all the header files;
-2. Compile and run the program:
-```
-for mac/linux: g++ main.cpp -std=c++0x -o wavGen
-./wavGen
-for win: g++ main.cpp -std=c++0x -o wavGen.exe
-./wavGen.exe
-```           
-
-3. Score-to-wavefile: input the scorefile name: eg. score.txt; input the wavfile name: eg. wave.wav,
+2. Compile the program using "make" under mac/linux (for windows you can make small change to the  Makefile);
+3. Run the program using "./scoreur", imput the required filenames.
+(1) Score-to-wavefile: input the scorefile name: eg. score.txt; input the wavfile name: eg. wave.wav,
 then the wave file will be generated.
-4. Wavefile-to-score: input the wavefile name.
+(2) Wavefile-to-score: input the wavefile name.
 
 ##Score structure (see "score.txt"):
 1. Three integers at the beginning, i)number of beats; ii)number of scores; iii)tempo in beat-per-minute;
