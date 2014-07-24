@@ -10,37 +10,37 @@
 
 double amp_fade(int i, int fade_range)//fade-in and fade-out effect
 {
-    if(i<fade_range)
-    {
+    if(i<fade_range){
         double k=1-cos(i*PI/fade_range);
         return k/2;
     }
     else return 1.0;
 }
 
+// ****** constructor ******************************
 WavIn::WavIn(char src[])//read
 {
-    wavstream.open(src,std::ios::binary|std::ios::in);
+    open(src,std::ios::binary|std::ios::in);
     
-    wavstream.read((char*)&riff,sizeof(riff_Header));
+    read((char*)&riff,sizeof(riff_Header));
     if(*(u32*)riff.riffId!=*(u32*)df_riffId)
     {
         std::cout<<"not riff file!"<<std::endl;
-        wavstream.close();
+        close();
         st=false;
     }
     else
     {
-        wavstream.read((char*)&wav,sizeof(wav_Block));
+        read((char*)&wav,sizeof(wav_Block));
         if(*(u32*)wav.wavId!=*(u32*)df_wavId)
         {
             std::cout<<"not wav file!"<<std::endl;
-            wavstream.close();
+            close();
             st=false;
         }
         else
         {
-            if(wav.wavSize==16)wavstream.seekg(-2,std::ios::cur);
+            if(wav.wavSize==16)seekg(-2,std::ios::cur);
             st=true;
         }
     }
@@ -48,23 +48,25 @@ WavIn::WavIn(char src[])//read
 
 WavOut::WavOut(char src[], u32 sampleps, u16 bpsample, u16 channel)
 {
-    wavstream.open(src,std::ios::binary|std::ios::out);
+    open(src,std::ios::binary|std::ios::out);
     st=true;
     
-    wav.Fmt.bpsample=bpsample;
-    wav.Fmt.sampleps=sampleps;
-    wav.Fmt.channel=channel;
-    wav.Fmt.blockAlign=bpsample/8*channel;//4
-    wav.Fmt.avgBps=sampleps*wav.Fmt.blockAlign;
-    wav.wavSize=16;//or 18
-    datah.dataSize=0;//change when appending
-    riff.riffSize=datah.dataSize+wav.wavSize+20;//change when appending
+    wav.Fmt.bpsample = bpsample;
+    wav.Fmt.sampleps = sampleps;
+    wav.Fmt.channel = channel;
+    wav.Fmt.blockAlign = bpsample/8*channel;//4
+    wav.Fmt.avgBps = sampleps*wav.Fmt.blockAlign;
+    wav.wavSize = 16;//or 18
+    datah.dataSize = 0;//change when appending
+    riff.riffSize = datah.dataSize+wav.wavSize+20;//change when appending
     
-    wavstream.seekp(0,std::ios::beg);
-    wavstream.write((char*)&riff,sizeof(riff_Header));
-    wavstream.write((char*)&wav,sizeof(wav_Block)-4);
-    wavstream.write((char*)&datah,sizeof(data_Header));
+    seekp(0,std::ios::beg);
+    write((char*)&riff,sizeof(riff_Header));
+    write((char*)&wav,sizeof(wav_Block)-4);
+    write((char*)&datah,sizeof(data_Header));
 }
+// ************************************************
+
 
 void WavFile::print_info()
 {
@@ -83,45 +85,46 @@ void WavIn::get_data(short *ldata, short *rdata, int bufsize, int offs)//copy di
 {
     if(st)
     {
-        int i=0;
-        wavstream.seekg(offs,std::ios::beg);
+        
+        seekg(offs,std::ios::beg);
+        int i = 0;
         while(i<bufsize)
         {
-            wavstream.read((char*)(ldata+i),2);//left channel
-            wavstream.read((char*)(rdata+i),2);//right channel
+            read((char*)(ldata+i),2);//left channel
+            read((char*)(rdata+i),2);//right channel
             ++i;
         }
     }
 }
 
-void WavOut::put_data(short *ldata,short *rdata,int bufsize,int offs=offs0)
+void WavOut::put_data(short *ldata,short *rdata,int bufsize,int offs = offs0)
 {
-    wavstream.seekp(offs,std::ios::beg);
+    seekp(offs,std::ios::beg);
     for(int i=0;i<bufsize;++i)
     {
-        wavstream.write((char*)(ldata+i),2);
-        wavstream.write((char*)(rdata+i),2);
+        write((char*)(ldata+i),2);
+        write((char*)(rdata+i),2);
     }
     
 }
-void WavOut::put_data(int btt,int snum,double *freq,short tnum[],int offs=offs0)
+void WavOut::put_data(int btt, int snum, double *freq, short tnum[], int offs = offs0)
 {
-    wavstream.seekp(offs,std::ios::beg);
+    seekp(offs,std::ios::beg);
     for(int i=0;i<snum;++i)
     {
-        double freq0=*(freq+i);
-        double freq1=2*freq0;//泛音
-        double freq2=3*freq0;
-        double freq3=4*freq0;
+        double freq0 = *(freq+i);
+        double freq1 = 2*freq0;//泛音
+        double freq2 = 3*freq0;
+        double freq3 = 4*freq0;
         
         short data,lrdata;
         for(int j=0;j<btt*tnum[i];++j)
         {
-            data=amp_fade(j)*amp_fade(btt*tnum[i]-j)*8000;
-            lrdata=data*(0.8*sin(freq0*j)+0.4*sin(freq1*j)+0.3*sin(freq2*j)+0.1*sin(freq3*j));//left channel
-            wavstream.write((char*)&lrdata,2);
-            lrdata=data*(0.8*cos(freq0*j)+0.4*cos(freq1*j)+0.3*cos(freq2*j)+0.1*cos(freq3*j));//right channel
-            wavstream.write((char*)&lrdata,2);
+            data = amp_fade(j)*amp_fade(btt*tnum[i]-j)*8000;
+            lrdata = data*(0.8*sin(freq0*j)+0.4*sin(freq1*j)+0.3*sin(freq2*j)+0.1*sin(freq3*j));//left channel
+            write((char*)&lrdata,2);
+            lrdata = data*(0.8*cos(freq0*j)+0.4*cos(freq1*j)+0.3*cos(freq2*j)+0.1*cos(freq3*j));//right channel
+            write((char*)&lrdata,2);
         }
     }
 }
@@ -145,10 +148,10 @@ int WavOut::score2wav(char scoresrc[]){
     
     datah.dataSize=tlen*samplepb*wav.Fmt.blockAlign;//change when appending
     riff.riffSize=datah.dataSize+wav.wavSize+20;//change when appending
-    wavstream.seekp(0,std::ios::beg);
-    wavstream.write((char*)&riff,sizeof(riff_Header));
-    wavstream.write((char*)&wav,sizeof(wav_Block)-4);
-    wavstream.write((char*)&datah,sizeof(data_Header));
+    seekp(0,std::ios::beg);
+    write((char*)&riff,sizeof(riff_Header));
+    write((char*)&wav,sizeof(wav_Block)-4);
+    write((char*)&datah,sizeof(data_Header));
     put_data(samplepb,snum,freq,tnum);
     
     delete []frnum;delete []tnum; delete []freq;
@@ -183,18 +186,18 @@ int WavIn::wav2score(char scoresrc[]){//to be continued
     
     return 1;
 }
-void WavOut::chgsrc(char src[])//change to a new file
-{
+void WavOut::chgsrc(char src[]){//change to a new file
     if(st)
-    {wavstream.close();
-        wavstream.open(src,std::ios::binary|std::ios::out);
+    {
+        close();
+        open(src,std::ios::binary|std::ios::out);
         
         datah.dataSize=0;//change when appending
-        riff.riffSize=datah.dataSize+wav.wavSize+20;//change when appending
-        wavstream.seekp(0,std::ios::beg);
-        wavstream.write((char*)&riff,sizeof(riff_Header));
-        wavstream.write((char*)&wav,sizeof(wav_Block)-4);
-        wavstream.write((char*)&datah,sizeof(data_Header));
+        riff.riffSize = datah.dataSize+wav.wavSize+20;//change when appending
+        seekp(0,std::ios::beg);
+        write((char*)&riff,sizeof(riff_Header));
+        write((char*)&wav,sizeof(wav_Block)-4);
+        write((char*)&datah,sizeof(data_Header));
         
     }
 }
