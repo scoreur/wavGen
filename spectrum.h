@@ -10,6 +10,7 @@
 #define _spectrum_h
 
 #include "complex.h"
+#include <cstddef>
 #include <vector>
 
 const int NOTENUM = 88; //Piano音符数目
