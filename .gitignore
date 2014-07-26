@@ -1,2 +1,5 @@
 *.wav
-main.exe
+*.o
+*.pkf
+scoreur
+*.exe
