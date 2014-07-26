@@ -4,6 +4,7 @@
 //
 //  Created by wyj on 7/23/14.
 //
+//  7/25/2014 重载Complex类>,<,==运算符
 //
 
 #include <cmath>
@@ -25,11 +26,11 @@ Complex::Complex(double c1,double c2,short mode=0){
     }
 }
 
-double Complex::norm(){//复数模长
+double Complex::norm() const{//复数模长
     return sqrt(x*x+y*y);
 }
 
-double Complex::arg(){
+double Complex::arg() const{//复数辐角
     double temp=0.0;
     switch(sgn(x)){
         case -1:
@@ -51,3 +52,17 @@ double Complex::arg(){
     return temp;
 
 }
+
+bool Complex::operator<(const Complex & c2){
+    return -1 == sgn(norm()-c2.norm());
+}
+bool Complex::operator>(const Complex & c2){
+    return 1 == sgn(norm()-c2.norm());
+}
+bool Complex::operator==(const Complex & c2){
+    return 0 == sgn(norm()-c2.norm());
+}
+
+
+
+

@@ -11,8 +11,8 @@
 
 float fr(int frnum, float sampleps)//音数与频率换算
 {
-    if( LOWEST_NOTE<=frnum && frnum<= HIGHEST_NOTE)
-        return 2*PI/sampleps * freq_piano[frnum+48];
+    if( 0 <= frnum && frnum<= NOTENUM)
+        return 2*PI/sampleps * freq_piano[frnum];
     else
         return 0.0;
 }
@@ -63,25 +63,25 @@ void freqSpectrum::update(short *data,short samplesize){
     norm=0.0;
     
     for(int i=0;i<NOTENUM;++i){
-        avg+=(spectrum[i]= fourier0(data, samplesize, fr(i-48))[0].norm());
-        norm+=(spectrum[i]*spectrum[i]);
-        if(maxpeak<spectrum[i]){maxpeak=spectrum[i];maxnote=i-48;}
-        if(noise>spectrum[i]){noise=spectrum[i];}
+        avg += (spectrum[i] = fourier0(data, samplesize, fr(i))[0]).norm();
+        norm += (spectrum[i].norm()*spectrum[i].norm());
+        if(maxpeak<spectrum[i].norm()){maxpeak = spectrum[i].norm();maxnote = i+LOWEST_NOTE;}
+        if(noise>spectrum[i].norm()){noise = spectrum[i].norm();}
     }
-    avg/=NOTENUM;
-    norm=sqrt(norm);
-    if(noise<0.5*NOISE){noise=0.4*NOISE;}
+    avg /= NOTENUM;
+    norm = sqrt(norm);
+    if(noise<0.5*NOISE){noise = 0.4*NOISE;}
     peaking();
 }
 
 void freqSpectrum::peaking(double threshold){
     peaks.clear();
-    for(short i=2;i<NOTENUM-2;++i){
-        if(spectrum[i]>spectrum[i-1]+3*noise && spectrum[i]>spectrum[i+1]+5*noise){
-            peaks.push_back(i-48);
+    for(short i=2;i<NOTENUM-2;++i){//与两边音符比较判断是否为次峰值，所设阈值可调整
+        if(spectrum[i].norm() > spectrum[i-1].norm() +3*noise && spectrum[i].norm() >spectrum[i+1].norm()+5*noise){
+            peaks.push_back(i+LOWEST_NOTE);
         }
-        else if(spectrum[i]>(spectrum[i-2]+spectrum[i-1])/2.0+10*noise && spectrum[i]>(spectrum[i+2]+spectrum[i+1])/2.0+10*noise){
-            peaks.push_back(i-48);
+        else if(spectrum[i].norm()>(spectrum[i-2].norm()+spectrum[i-1].norm())/2.0+10*noise && spectrum[i].norm()>(spectrum[i+2].norm()+spectrum[i+1].norm())/2.0+10*noise){
+            peaks.push_back(i+LOWEST_NOTE);
         }
         
     }
@@ -91,7 +91,7 @@ void freqSpectrum::peaking(double threshold){
 double similar(freqSpectrum fs1, freqSpectrum fs2){//频谱相似程度
     double s=0.0;
     for(int i=0;i<NOTENUM;++i){
-        s+=(fs1.spectrum[i]*fs2.spectrum[i]);
+        s+=(fs1.spectrum[i].norm() * fs2.spectrum[i].norm());
     }
     return s/fs1.norm/fs2.norm;
     

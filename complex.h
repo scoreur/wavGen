@@ -22,8 +22,12 @@ private:
 public:
     double x,y;//real and imaginary parts
     
-    double norm();//复数模长
-    double arg();//复数辐角，-PI～PI
+    double norm() const;//复数模长
+    double arg() const;//复数辐角，-PI～PI
+    
+    bool operator<(const Complex &);
+    bool operator>(const Complex &);
+    bool operator==(const Complex &);
     
     Complex():x(0.0),y(0.0){};
     Complex(double, double, short);

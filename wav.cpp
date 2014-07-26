@@ -2,20 +2,14 @@
 //  wav.cpp
 //  
 //
-//  Created by user on 7/23/14.
+//  Created by wyj on 7/23/14.
 //
+//  7/25/2014升级曲谱结构V2.0，类似MID
 //
 
 #include "wav.h"
-
-double amp_fade(int i, int fade_range)//fade-in and fade-out effect
-{
-    if(i<fade_range){
-        double k=1-cos(i*PI/fade_range);
-        return k/2;
-    }
-    else return 1.0;
-}
+#include "score.h"
+#include <cmath>
 
 // ****** constructor ******************************
 WavIn::WavIn(char src[])//read
@@ -97,7 +91,7 @@ void WavIn::get_data(short *ldata, short *rdata, int bufsize, int offs)//copy di
     }
 }
 
-void WavOut::put_data(short *ldata,short *rdata,int bufsize,int offs = offs0)
+void WavOut::put_data(short *ldata, short *rdata, int bufsize, int offs = offs0)
 {
     seekp(offs,std::ios::beg);
     for(int i=0;i<bufsize;++i)
@@ -107,9 +101,11 @@ void WavOut::put_data(short *ldata,short *rdata,int bufsize,int offs = offs0)
     }
     
 }
+
 void WavOut::put_data(int btt, int snum, double *freq, short tnum[], int offs = offs0)
 {
-    seekp(offs,std::ios::beg);
+    int * bufsize = new int[snum];
+
     for(int i=0;i<snum;++i)
     {
         double freq0 = *(freq+i);
@@ -117,32 +113,41 @@ void WavOut::put_data(int btt, int snum, double *freq, short tnum[], int offs = 
         double freq2 = 3*freq0;
         double freq3 = 4*freq0;
         
-        short data,lrdata;
-        for(int j=0;j<btt*tnum[i];++j)
+        
+        bufsize[i] = btt*tnum[i];
+        short *ldata = new short[bufsize[i]];
+        short *rdata = new short[bufsize[i]];
+        for(int j=0;j<bufsize[i];++j)
         {
-            data = amp_fade(j)*amp_fade(btt*tnum[i]-j)*8000;
-            lrdata = data*(0.8*sin(freq0*j)+0.4*sin(freq1*j)+0.3*sin(freq2*j)+0.1*sin(freq3*j));//left channel
-            write((char*)&lrdata,2);
-            lrdata = data*(0.8*cos(freq0*j)+0.4*cos(freq1*j)+0.3*cos(freq2*j)+0.1*cos(freq3*j));//right channel
-            write((char*)&lrdata,2);
+            short data_temp = amp(j,bufsize[i])*8000;
+            ldata[j] = data_temp * (0.8*sin(freq0*j)+0.4*cos(freq1*j)+0.3*sin(freq2*j)+0.1*cos(freq3*j));//left channel
+            rdata[j] = data_temp * (0.8*cos(freq0*j)+0.4*sin(freq1*j)+0.3*cos(freq2*j)+0.1*sin(freq3*j));//right channel
         }
+        
+        put_data(ldata, rdata, bufsize[i], offs);
+        delete []ldata; delete []rdata;
+        offs += (bufsize[i] * 4);
     }
+    delete []bufsize;
 }
-int WavOut::score2wav(char scoresrc[]){
+int WavOut::score2wav(char scoresrc[]){//scoreV1.1
     short snum;
     short tlen;
     short beatspm;
     std::fstream scorefile;
     scorefile.open(scoresrc,std::ios::in);
+    char sv[10];
+    scorefile>>sv;
     scorefile>>tlen>>snum>>beatspm;
     int samplepb=sampleps0*60.0/beatspm;//每拍采样数
     short *frnum = new short[snum];
     short *tnum = new short[snum];
     double *freq=new double[snum];
+    
     for(int i=0;i<snum;++i)
     {
         scorefile>>frnum[i]>>tnum[i];
-        freq[i]=fr(frnum[i]);
+        freq[i]=fr(frnum[i]-LOWEST_NOTE);
     }
     scorefile.close();
     
@@ -156,14 +161,34 @@ int WavOut::score2wav(char scoresrc[]){
     
     delete []frnum;delete []tnum; delete []freq;
     
-    std::cout<<"Duration:"<<tlen*60.0/beatspm<<"s; Beats: "<<snum;
+    std::cout<<std::endl<<sv<<" Duration:"<<tlen*60.0/beatspm<<"s; Beats: "<<snum;
     print_info();
     return 1;
     
 }
+
+int WavOut::score2wav(midSeq & mids){//scoreV2.0
+    
+
+    short * lrdata;
+    datah.dataSize = mid2data(lrdata, mids, sampleps0) * wav.Fmt.blockAlign;//change when appending
+    riff.riffSize = datah.dataSize+wav.wavSize+20;//change when appending
+    seekp(0,std::ios::beg);
+    write((char*)&riff,sizeof(riff_Header));
+    write((char*)&wav,sizeof(wav_Block)-4);
+    write((char*)&datah,sizeof(data_Header));
+    
+    put_data(lrdata, lrdata, datah.dataSize/wav.Fmt.blockAlign);
+    delete []lrdata;
+    
+    std::cout<<std::endl<<"duration:"<<mids.dura()/1000.0<<"s; tone number:"<<mids.tone_num();
+    return 1;
+}
+
+
 int WavIn::wav2score(char scoresrc[]){//to be continued
     
-    freqSpectrum sp;
+    
     short ldata[160000];
     short rdata[160000];
     get_data(ldata,rdata, 160000,44);
@@ -178,6 +203,7 @@ int WavIn::wav2score(char scoresrc[]){//to be continued
     
     
     /*
+     freqSpectrum sp;
      for(int k=0;k<20;++k){
      wavin.get_data(ldata,rdata, 16000,16000*k+6044);
      sp.update(rdata+4000,64);

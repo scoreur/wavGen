@@ -11,7 +11,7 @@
 
 #include "types.h"
 #include "spectrum.h"
-#include <cmath>
+#include "score.h"
 #include <fstream>
 #include <iostream>
 
@@ -61,8 +61,6 @@ struct data_Header
 
 const int offs0=sizeof(riff_Header)+sizeof(wav_Block)-4+sizeof(data_Header);//44
 
-extern double amp_fade(int i, int fade_range=4000);//fade-in and fade-out effect
-
 
 //
 
@@ -107,9 +105,10 @@ class WavIn: public WavFile{
 
 class WavOut: public WavFile{
  public:
-    void put_data(short *ldata, short *rdata, int bufsize, int offs);//
+    void put_data(short *ldata, short *rdata, int bufsize, int offs);//直接复制PCM数据
     void put_data(int btt, int snum, double *freq, short tnum[], int offs);
-    int score2wav(char scoresrc[]);
+    int score2wav(char scoresrc[]);//scoreV1.1;
+    int score2wav(midSeq & mids);//用类似MID格式的输入, scoreV2.0;
     void chgsrc(char src[]);
 
     WavOut(char src[], u32 sampleps=sampleps0, u16 bpsample=16, u16 channel=2);
