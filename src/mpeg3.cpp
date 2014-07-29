@@ -6,7 +6,7 @@
 //
 //
 
-#include "mpeg3.h"
+#include "../include/mpeg3.h"
 
 
 u32 ID3_Header::realsize(){
@@ -23,6 +23,10 @@ void ID3_Header::setsize(u32 inputsize){
         framesize[i] = (u8)(inputsize & 0x7F);
         inputsize >>= 7;
     }
+}
+u16 Frame_Header::datasize(){
+    u16 temp = (bps_V1L3[bps_index] * samplepf_V1) /sampleps_V1[sampleps_index];
+    return temp + padding;
 }
 
 bool mp3In::valid(){//to be continued

@@ -6,7 +6,7 @@
 //
 //
 
-#include "spectrum.h"
+#include "../include/spectrum.h"
 #include <cmath>
 
 float fr(int frnum, float sampleps)//音数与频率换算

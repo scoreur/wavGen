@@ -10,8 +10,8 @@
 #include <fstream>
 #include <vector>
 #include <cmath>
-#include "spectrum.h"
-#include "score.h"
+#include "../include/spectrum.h"
+#include "../include/score.h"
 
 float amp_fade(int i, int fade_range)//fade-in and fade-out effect
 {
@@ -34,7 +34,7 @@ float amp_fade2(int i, int fade_range)
 float amp(u32 i, u32 range, MID::INSTRUMENT instru){
     switch(instru){
         case MID::Flute:
-            return amp_fade(i)*amp_fade2(range - i); break;
+            return amp_fade(i, 3500)*amp_fade2(range - i); break;
         case MID::Piano:
             return amp_fade2(i)*amp_fade2(range - i); break;
             

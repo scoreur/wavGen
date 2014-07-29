@@ -8,7 +8,7 @@
 
 
 //#include <string>
-#include "wav.h"
+#include "../include/wav.h"
 using namespace std;
 
 void test_score2wav(){

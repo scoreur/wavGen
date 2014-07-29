@@ -13,10 +13,12 @@
 #include <iostream>
 #include <fstream>
 
-const int samplepf = 1152;//每frame采样数
-
-
-struct ID3_Header{
+const u16 samplepf_V1 = 1152;//MPEG1 每frame采样数，其余取一半
+const u16 bps_V1L3[15] = {0,32,40,48,56,64,80,96,112,128,160,192,224,256,320};
+//MPEG1 Layer3比特率索引, 单位Kps, 0x0free记为0, 0xF为bad不放在数组中
+const u16 sampleps_V1[3] = {44100, 48000, 32000};
+//MPEG1 采样率索引, 单位Hz，0x3保留不放入数组中
+struct ID3_Header{//ID3V2
     u8 id3Id[3];//={'I', 'D', '3'};
     u8 version;//= 0x3;
     u8 revision;//= 0x0;
@@ -26,7 +28,7 @@ struct ID3_Header{
     u32 realsize();//calculated from framesize[4]
     void setsize(u32);
     
-};//sizefo(ID3_Header) == 10
+};//sizeof(ID3_Header) == 10 (不对齐内存的话）
 const ID3_Header df_id3h = {{'I', 'D', '3'}, 0x3, 0x0, 0x0, {0x0,0x0,0x0,0xA}};
 
 struct Tag_Header{
@@ -48,25 +50,26 @@ struct Frame_Header{//4 bytes,按位域存储
     u32 crc:1;//决定帧头后是否有2bytes校验: 0x1不校验
     //2nd byte
     
-    u32 bps_index:4;//位率索引,0x9为128kpbs
+    u32 bps_index:4;//位率索引,0x9为128kpbs, 见上面常量定义部分
     u32 sampleps_index:2;//采样率索引,00为44.1kHz
-    u32 padding:1;//0无需调节帧长
+    u32 padding:1;//0无需调节帧长, 1数据帧上增加一个附加位
     u32 extension:1;//未使用
     
     //3rd byte
     
-    u32 channel:2;//00stereo
-    u32 mode_extension:2;//for channel 01
+    u32 channel:2;//00stereo, 0x3mono
+    u32 mode_extension:2;//for channel 01(joint stereo)
     u32 copyright:1;//0无版权
-    u32 original:1;//1原版
-    u32 emphasis:2;//00未定义
+    u32 original:1;//1原版, 0复制
+    u32 emphasis:2;//00none
     
     //4th byte
 
     Frame_Header():sync1(0xFF), sync2(7), version(3), layer(1){}
+    u16 datasize() const;//计算数据帧字节数, for MPEG1 Layer3
 };
 
-struct ID3_Tail{//128Bytes
+struct ID3_Tail{//ID3V1,128Bytes
     u8 tag[3];//="TAG"
     u8 title[30];
     u8 author[30];

@@ -7,8 +7,8 @@
 //  7/25/2014升级曲谱结构V2.0，类似MID
 //
 
-#include "wav.h"
-#include "score.h"
+#include "../include/wav.h"
+#include "../include/score.h"
 #include <cmath>
 
 // ****** constructor ******************************

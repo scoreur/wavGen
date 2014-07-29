@@ -32,7 +32,7 @@ namespace MID{
         
     };
     enum BEATS{
-        b24 = 0,    //2/4拍，以此类推
+        b24 = 0,            //2/4拍，以此类推
         b34,
         b44,
         b38,
@@ -42,10 +42,11 @@ namespace MID{
         b32
     };
 }
-extern float amp_fade(int i, int fade_range=3500);//fade-in and fade-out effect
-extern float amp_fade2(int i, int fade_range=3500);
-
+extern float amp_fade(int i, int fade_range);//fade-in and fade-out effect
+extern float amp_fade2(int i, int fade_range = 3500);
 extern float amp(u32 i, u32 range, MID::INSTRUMENT instru = MID::Flute);
+//各种乐器的波形包络
+
 struct midEvent{            //参考MID格式
     u16 time_diff;          //与上一音符的差，以毫秒为单位
     MID::EVENT flag;        //事件类型标记
@@ -57,15 +58,15 @@ struct midEvent{            //参考MID格式
 
 
 struct toneState{
-    u16 pitch;                   //0音符表示关闭（或称为何止符）
-    u16 force;                 //当前力度，范围待定
-    MID::INSTRUMENT instrument;//当前乐器
+    u16 pitch;                      //0音符表示关闭（或称为何止符）
+    u16 force;                      //当前力度，范围待定
+    MID::INSTRUMENT instrument;     //当前乐器
     u16 tempo;                      //当前速度，in beats-per-minute
-    MID::BEATS beat;                       //当前节拍
+    MID::BEATS beat;                //当前节拍
     //状态量
 
     void print_info() const;
-    bool add(midEvent);         //返回当前音符状态是否为打开
+    bool add(midEvent);             //返回当前音符状态是否为打开
     
 };
 const toneState df_tone = {0, 100, MID::Flute, 96, MID::b44};
@@ -76,11 +77,11 @@ private:
     u32 tone_total;                 //音符总数,即midEvent::TONE_begin计数
     u32 duration;                   //总持续时间，毫秒
     //统计量
-    std::vector<midEvent> events;    //事件序列
+    std::vector<midEvent> events;   //事件序列
 public:
     
-    bool isOn(u32 num) const;               //从前往后第num个事件执行后是否有音符打开
-    bool isOn() const;                      //返回当前音符是否打开;
+    bool isOn(u32 num) const;      //从前往后第num个事件执行后是否有音符打开
+    bool isOn() const;             //返回当前音符是否打开;
     u32 tone_num(u32 num) const;   //从前往后num毫秒后音符总数，即midEvent::TONE_begin个数
     u32 tone_num() const;          //返回当前音符总数
  
