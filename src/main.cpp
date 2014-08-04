@@ -7,7 +7,7 @@
 //
 
 
-//#include <string>
+#include <cstring>
 #include "../include/wav.h"
 using namespace std;
 
@@ -54,9 +54,15 @@ void test_score2mid(){
 }
 int main(int argc, char * argv[])
 {
-    test_score2wav();
-    //test_wav2score();
-    test_score2mid();
+    if(argc == 1 || !strncmp(argv[1],"-h",2) || !strncmp(argv[1], "-?",2))
+        cout<<"parameter usage: "<<endl<<"-w : score to wav using version 1.1"<<endl
+        <<"-m : score to wav using version 2.0"<<endl;
+    else if(!strncmp(argv[1],"-w",2))
+        test_score2wav();
+        //test_wav2score();
+    else if(!strncmp(argv[1],"-m",2))
+        test_score2mid();
+    
     return 0;
 }
 
