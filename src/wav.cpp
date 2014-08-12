@@ -17,7 +17,7 @@ WavIn::WavIn(char src[])//read
     open(src,std::ios::binary|std::ios::in);
     
     read((char*)&riff,sizeof(riff_Header));
-    if(*(u32*)riff.riffId!=*(u32*)df_riffId)
+    if(*(u32*)riff.riffId!=*(u32*)WAV::riffId)
     {
         std::cout<<"not riff file!"<<std::endl;
         close();
@@ -26,7 +26,7 @@ WavIn::WavIn(char src[])//read
     else
     {
         read((char*)&wav,sizeof(wav_Block));
-        if(*(u32*)wav.wavId!=*(u32*)df_wavId)
+        if(*(u32*)wav.wavId!=*(u32*)WAV::wavId)
         {
             std::cout<<"not wav file!"<<std::endl;
             close();
@@ -91,7 +91,7 @@ void WavIn::get_data(short *ldata, short *rdata, int bufsize, int offs)//copy di
     }
 }
 
-void WavOut::put_data(short *ldata, short *rdata, int bufsize, int offs = offs0)
+void WavOut::put_data(short *ldata, short *rdata, int bufsize, int offs)
 {
     seekp(offs,std::ios::beg);
     for(int i=0;i<bufsize;++i)
@@ -102,7 +102,7 @@ void WavOut::put_data(short *ldata, short *rdata, int bufsize, int offs = offs0)
     
 }
 
-void WavOut::put_data(int btt, int snum, double *freq, short tnum[], int offs = offs0)
+void WavOut::put_data(int btt, int snum, double *freq, short tnum[], int offs)
 {
     int * bufsize = new int[snum];
 
