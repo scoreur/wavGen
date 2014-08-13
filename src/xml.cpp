@@ -87,6 +87,24 @@ void Node::setAttr(string attr, string val){
 void Node::setContent(string cont){
     contents += cont;
 }
+void Node::toFile(std::fstream &xmlout){
+    xmlout<<"<"<<tag<<" ";
+    for(info_p iter = attributes.begin();
+        iter != attributes.end(); ++iter)
+    {
+        xmlout<<iter->first<<"=\""<<iter->second<<"\" ";
+    }
+    xmlout<<">";
+    if(contents != string("")){
+        xmlout<<contents;
+    }
+    if(eldestChild !=0) eldestChild->toFile(xmlout);
+    xmlout<<"</"<<tag<<">";
+    if(littleBro != 0) littleBro->toFile(xmlout);
+    
+
+    
+}
 ///
 ////////////////////////////////////////////////////////////
 
@@ -111,32 +129,6 @@ XML::XML(char * const & xmlsrc): Node(string("xml")),
     xmlin.close();
     readp = src;
     
-    while(*(readp++) != '<');//tag not start
-    buf_node();
-    if(putattr != string("?xml")){
-        debug("It's not XML file")
-        return;
-    }
-
-    while(*readp != '?' || *(readp+1) != '>')//tag not close
-    {
-    buf_attr();
-    buf_val();
-    attributes[putattr] = string(buffer);
-    while(*(++readp)==' ');//get to next non-space
-    }
-    readp += 2;
-    
-    //read root node
-    while(*(readp++) != '<');
-    buf_node();
-    root = new Node(putattr);
-    tags.push_back(putattr);//add root tag
-    num.push_back(1);//increase tag number
-    stack.push_back(root);  //current tag
-    debug( "add node:"<<(root->Tag()))
-    read_node();
-    readp += 1;
     //
     construct();
     print_info();
@@ -150,6 +142,34 @@ XML::~XML(){
 
 /// @brief construct parsing tree
 int XML::construct(){
+    readp = src;
+    while(*(readp++) != '<');//tag not start
+    buf_node();
+    if(putattr != string("?xml")){
+        debug("It's not XML file")
+        return 0;
+    }
+    
+    while(*readp != '?' || *(readp+1) != '>')//tag not close
+    {
+        buf_attr();
+        buf_val();
+        attributes[putattr] = string(buffer);
+        while(*(++readp)==' ');//get to next non-space
+    }
+    readp += 2;
+    
+    //read root node
+    while(*(readp++) != '<');
+    buf_node();
+    root = new Node(putattr);
+    tags.push_back(putattr);//add root tag
+    num.push_back(1);//increase tag number
+    stack.push_back(root);  //current tag
+    debug( "add node:"<<(root->Tag()))
+    read_node();
+    readp += 1;
+
     while(stack.size()>0){//root tag not closing
         
         if(buf_cont()) stack.back()->setContent(putattr);
@@ -158,7 +178,7 @@ int XML::construct(){
             ++readp;
             buf_node();
             if( putattr != stack.back()->Tag())
-                debug("closing error: not "<< putattr)
+                debug("closing error: NOT "<< putattr)
             //debug("close node:"<<(stack.back()->Tag()))
             stack.pop_back();
             ++readp;//move out of '>'
@@ -183,9 +203,20 @@ int XML::construct(){
                 readp += 1;//move out of '>'
         }
     }
-    
-    
     return tags.size();
+}
+void XML::clear(bool flag){
+    
+    delete src;
+    src = new char[1];
+    readp = 0;
+    putattr = string("");
+    if(flag){
+        delete root;
+        root = 0;
+        tags.clear();
+        num.clear();
+    }
 }
 
 void XML::read_node(){
@@ -253,6 +284,15 @@ void XML::print_info(bool flag){
     }
     root->print_info(flag);
 }
+void XML::toFile(char * const &xmlsrc){
+    std::fstream xmlout;
+    xmlout.open(xmlsrc, std::ios::out);
+    xmlout<<"<?xml version=\""<<attributes[string("version")]
+          <<"\" encoding=\""<<attributes[string("encoding")]
+          <<"\"?>";
+    root->toFile(xmlout);
+    
+}
 
 ///
 ////////////////////////////////////////////////////////////
@@ -270,11 +310,16 @@ int main(int argc, char *argv[]){
     ;
  */
     char xmlsrc[] = "../scoreV3.xml";
+    char xmlsrc2[]="../scoreV3_out.xml";
 
     if(argc>1)
         XML xml(argv[1]);
-    else
+    else{
         XML xml(xmlsrc);
+        xml.toFile(xmlsrc2);
+    }
+    
+     
     
     return 0;
     
