@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<music title="little star" beat="4/4">
+	<track name="melody" instrument="piano">
+		<style tempo="108" force="100"/>
+		<note pitch="39" duration="6"/>
+		<note pitch="39" duration="6"/>
+		<note pitch="46" duration="6"/>
+		<note pitch="46" duration="6"/>
+		<note pitch="48" duration="6"/>
+		<note pitch="48" duration="6"/>
+		<note pitch="" duration="6"/>
+		<note pitch="" duration=""/>
+		<note pitch="" duration=""/>
+		
+		
+	</track>
+	<track name="accompany" instrument="violin">
+		<style tempo="108" force="80"/>
+		<note pitch="" duration=""/>
+		<note pitch="" duration=""/>
+		<note pitch="" duration=""/>
+		<note pitch="" duration=""/>
+		<note pitch="" duration=""/>
+		<note pitch="" duration=""/>
+		
+	</track>
+</music>
+		
