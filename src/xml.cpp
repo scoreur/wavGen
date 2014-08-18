@@ -12,6 +12,7 @@ using std::vector;
 using std::map;
 using std::cout;
 using std::endl;
+#define debug(XXX)  //std::cout<< XXX <<std::endl;
 
 typedef map<string, string>::iterator info_p;
 template <typename T>
@@ -131,7 +132,7 @@ XML::XML(char * const & xmlsrc): Node(string("xml")),
     
     //
     construct();
-    print_info();
+    print_info(true);
 }
 
 /// @brief destructor
@@ -146,7 +147,7 @@ int XML::construct(){
     while(*(readp++) != '<');//tag not start
     buf_node();
     if(putattr != string("?xml")){
-        debug("It's not XML file")
+        cout<<"It's not XML file"<<endl;
         return 0;
     }
     
@@ -171,15 +172,32 @@ int XML::construct(){
     readp += 1;
 
     while(stack.size()>0){//root tag not closing
-        
         if(buf_cont()) stack.back()->setContent(putattr);
         ++readp;
+        while( *readp =='!'){//opposite: sole '<'
+            //skip comments (simple kmp)
+            readp += 3;//!--
+            int f=0;
+            while(f<3){
+                if(f==-1 || *readp=='-'){
+                    ++f; ++readp;
+                    if(f==2 && *readp=='>')
+                        ++f;
+                }else
+                    f=-1;
+            }
+            ++readp;
+            debug("skip comments")
+        while(*(readp++)!='<');
+        }
         if(*readp == '/'){//closing tag
             ++readp;
             buf_node();
-            if( putattr != stack.back()->Tag())
-                debug("closing error: NOT "<< putattr)
-            //debug("close node:"<<(stack.back()->Tag()))
+            if( putattr != stack.back()->Tag()){
+                cout<<"closing error: NOT "<< putattr<<endl;
+                return 0;
+            }
+            debug("close node:"<<(stack.back()->Tag()))
             stack.pop_back();
             ++readp;//move out of '>'
         }else{          //opening tag
@@ -190,13 +208,13 @@ int XML::construct(){
                 num.push_back(1);
                 debug("add tag: "<<tags.back())
             }else
-                debug(putattr<<"->"<<++num[i]);//increase the number of this kind of tag
+                ++num[i];//increase the number of this kind of tag
             stack.push_back(new Node(putattr, stack.back()));//open new node
-            //debug( "open node:"<<(stack.back()->Tag()))
-            if(*readp != '/')
+            debug( "open node:"<<(stack.back()->Tag()))
+            if(*readp != '/' && *readp != '>')
                 read_node();
             if(*readp == '/'){
-                //debug("close node:"<<stack.back()->Tag())
+                debug("close node:"<<stack.back()->Tag())
                 stack.pop_back();
                 readp += 2;
             }else
@@ -223,32 +241,32 @@ void XML::read_node(){
     while(*readp != '>' && *readp != '/')//tag not close
     {
         buf_attr();
-        buf_val();
+        buf_val(); ++readp;
         stack.back()->setAttr(putattr, string(buffer));
-        while(*(++readp)==' ');//get to next non-space
+        while(*readp==' ') ++readp;//get to next non-space
     }
     
 
 }
 void XML::buf_node(){
-    while(*readp==' ') ++readp;
+    while(*readp==' ' || *readp=='\t') ++readp;
     putp = buffer;
     do
         *(putp++) = *(readp++);
-    while(*readp != ' ' && *readp != '>' && *readp != '/');
+    while(*readp != ' ' && *readp != '>' && (*readp != '/'||*(readp+1)!='>'));
     *putp = '\0';
     putattr = string(buffer);
-    
+    debug("node:"<<putattr)
 }
 void XML::buf_attr(){
-    while(*readp==' ') ++readp;
+    while(*readp==' ' || *readp=='\t') ++readp;
     putp = buffer;
     do
         *(putp++) = *(readp++);
-    while(*readp != '=' && *readp != ' ');
+    while(*readp != '=' && *readp != ' ' && *readp!='\t');
     *putp = '\0';
     putattr = string(buffer);
-    //debug("attr:"<<putattr)
+    debug("attribute:"<<putattr)
     
 }
 void XML::buf_val(){
@@ -261,18 +279,19 @@ void XML::buf_val(){
     *putp = '\0';
 }
 bool XML::buf_cont(){
-    
+    while(*readp == '\n' || *readp == '\t' || *readp == ' ')
+        ++readp;
     if(*readp == '<') return false;
     putp = buffer;
     do{
-        if(*readp == '\n')
+        if(*readp == '\n' || *readp == '\t')
             *(putp++) = ' ';
         else
             *(putp++) = *readp;
     }while(*(++readp) != '<');
     *putp = '\0';
     putattr = string(buffer);
-    //debug("attr:"<<putattr)
+    debug("content:"<<putattr)
     return true;
 }
 void XML::print_info(bool flag){
@@ -313,7 +332,7 @@ int main(int argc, char *argv[]){
     char xmlsrc2[]="../scoreV3_out.xml";
 
     if(argc>1)
-        XML xml(argv[1]);
+    {XML xml(argv[1]); xml.toFile(xmlsrc2);}
     else{
         XML xml(xmlsrc);
         xml.toFile(xmlsrc2);

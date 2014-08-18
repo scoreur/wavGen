@@ -19,7 +19,7 @@
 #include <vector>
 #include <map>
 #include <fstream>
-#define debug(XXX)  std::cout<< XXX <<std::endl;
+
 
 const int BUFFERSIZE = 100;
 
