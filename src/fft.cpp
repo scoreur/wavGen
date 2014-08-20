@@ -55,6 +55,15 @@ unsigned int ord2(unsigned int y){//nearest log_2
         x<<=1;}
     return l;
 }
+
+unsigned int bitrev(unsigned int num){
+    unsigned k = 1&i;
+    for(int j=1;j<ord2(num);++j){
+        k = (k<<1)|((i>>j)&1);
+    }
+    return k;
+}
+
 template<typename T>
 T * fml(T *in, unsigned int num){//formalize to 2-power and bit-reverse
     if(num==1) return in;
@@ -62,35 +71,23 @@ T * fml(T *in, unsigned int num){//formalize to 2-power and bit-reverse
     T *out = new T[n];
     
     for(int i=0;i<num;++i)
-    out[i] = in[i];
-    for(int i=num;i<n;++i)
-    out[i] = (T)0.0;
-    T temp = (T)0.0;
-    for(unsigned int i=1;i<n>>1;++i){//bit reverse
-        unsigned k = 1&i;
-        for(int j=1;j<ord2(num);++j){
-            k = (k<<1)|((i>>j)&1);
-        }
-        temp = out[i]; out[i]=out[k];out[k]=temp;
-        temp = out[n-k]; out[n-k]=out[n-i];out[n-k]=temp;
-        
-    }
+    out[bitrev(i)] = in[i];
     return out;
 }
+
 
 cmplx e_i(int m){//e^(2PI*i/m)
     return cmplx(cos(2*M_PI/m),sin(2*M_PI/m));
 }
 
-cmplx *fft(cmplx *in, unsigned int num, int mode){//iterative
-    //mode == -1 means inverse transform
-    if(mode != 1) mode = -1;
+cmplx *fft(cmplx *in, unsigned int num, bool mode){//iterative
+    
     cmplx *out = fml(in, num);
     unsigned int ord = ord2(num);
     num = 1<<ord;//formalized length
     for(unsigned s=1;s<=ord;++s){//depth
         int m = 1<<s;
-        cmplx wm = e_i(mode * m);//rotating factor
+        cmplx wm = mode? e_i(m): e_i(-m);//rotating factor
         cmplx w,u,t;//for temporary storing
         for(int k=0;k<num>>1;k+=m)
         {
@@ -104,18 +101,20 @@ cmplx *fft(cmplx *in, unsigned int num, int mode){//iterative
             }
         }
     }
-    if(mode == 1)
-    for(int k=0;k<num;++k){
-        out[k]=out[k]*2.0/(cmplx)num;//normalize
-    }
+    if(mode)
+        for(int k=0;k<num;++k){
+            out[k]=out[k]*2.0/(cmplx)num;//normalize
+        }
+    else
+        for(int k=0;k<num;++k){
+            out[k] *= 0.5;//normalize
+        }
    
     return out;
 }
-cmplx *dft(cmplx *in, unsigned int num, int mode){//accurate
-    //mode == -1 means inverse transform
-    if(mode != 1) mode = -1;
+cmplx *dft(cmplx *in, unsigned int num, bool mode){//accurate
     cmplx *out = new cmplx[num];
-    cmplx w0 = e_i( mode * num);
+    cmplx w0 = mode? e_i(num): e_i(-num);
     cmplx w = 1.0;
     for(int j=0;j<(num>>1);++j){
         out[j] = 0.0;
@@ -123,9 +122,11 @@ cmplx *dft(cmplx *in, unsigned int num, int mode){//accurate
             out[j] = w*out[j]+in[k];
         }
         w *= w0;
-        if(mode ==1)
+        if(mode)
             out[j] *= (2.0 /num);
-        out[num-j] = cmplx(out[j].real(), -out[j].imag());
+        else
+            out[j] *= 0.5;
+        if(j) out[num-j] = cmplx(out[j].real(), -out[j].imag());
     }
     return out;
 }

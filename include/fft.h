@@ -66,8 +66,8 @@ unsigned int ord2(unsigned int y);//nearest log_2
 template<typename T>
 T * fml(T *in, unsigned int num);//formalize to 2-power and bit-reverse
 cmplx e_i(int m);//e^(2PI*i/m)
-cmplx *fft(cmplx *in, unsigned int num, int mode = 1);//iterative
-cmplx *dft(cmplx *in, unsigned int num, int mode = 1);//accurate
+cmplx *fft(cmplx *in, unsigned int num, bool mode = true);//iterative
+cmplx *dft(cmplx *in, unsigned int num, bool mode = true);
 int peak(cmplx *data, int num);
 
 #endif
