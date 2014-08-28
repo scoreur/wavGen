@@ -56,9 +56,10 @@ unsigned int ord2(unsigned int y){//nearest log_2
     return l;
 }
 
-unsigned int bitrev(unsigned int num){
+unsigned int bitrev(unsigned int num, unsigned int ord=0){
+    if(ord == 0 ) return 0;
     unsigned k = 1&i;
-    for(int j=1;j<ord2(num);++j){
+    for(int j=1;j<ord;++j){
         k = (k<<1)|((i>>j)&1);
     }
     return k;
@@ -66,12 +67,11 @@ unsigned int bitrev(unsigned int num){
 
 template<typename T>
 T * fml(T *in, unsigned int num){//formalize to 2-power and bit-reverse
-    if(num==1) return in;
     unsigned int n = 1<<ord2(num);
     T *out = new T[n];
-    
+    if(n == 1){ out[0]=in[0];return out;}
     for(int i=0;i<num;++i)
-    out[bitrev(i)] = in[i];
+        out[bitrev(i)] = in[i];
     return out;
 }
 
