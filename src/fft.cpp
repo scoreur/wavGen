@@ -58,9 +58,9 @@ unsigned int ord2(unsigned int y){//nearest log_2
 
 unsigned int bitrev(unsigned int num, unsigned int ord=0){
     if(ord == 0 ) return 0;
-    unsigned k = 1&i;
+    unsigned k = 1&num;
     for(int j=1;j<ord;++j){
-        k = (k<<1)|((i>>j)&1);
+        k = (k<<1)|((num>>j)&1);
     }
     return k;
 }
@@ -85,11 +85,13 @@ cmplx *fft(cmplx *in, unsigned int num, bool mode){//iterative
     cmplx *out = fml(in, num);
     unsigned int ord = ord2(num);
     num = 1<<ord;//formalized length
+    cmplx w(0),u(0),t(0);//for temporary storing
+    unsigned int m = 1;
     for(unsigned s=1;s<=ord;++s){//depth
-        int m = 1<<s;
+        m = 1<<s;
         cmplx wm = mode? e_i(m): e_i(-m);//rotating factor
-        cmplx w,u,t;//for temporary storing
-        for(int k=0;k<num>>1;k+=m)
+        
+        for(int k=0;k<num;k+=m)
         {
             w = cmplx(1.0,0.0);
             for(int j=0;j<(m>>1);++j){
@@ -103,30 +105,25 @@ cmplx *fft(cmplx *in, unsigned int num, bool mode){//iterative
     }
     if(mode)
         for(int k=0;k<num;++k){
-            out[k]=out[k]*2.0/(cmplx)num;//normalize
+            out[k] *= 1.0/num;//normalize
         }
-    else
-        for(int k=0;k<num;++k){
-            out[k] *= 0.5;//normalize
-        }
-   
+    
     return out;
 }
 cmplx *dft(cmplx *in, unsigned int num, bool mode){//accurate
     cmplx *out = new cmplx[num];
     cmplx w0 = mode? e_i(num): e_i(-num);
     cmplx w = 1.0;
-    for(int j=0;j<(num>>1);++j){
+    for(int j=0;j<num;++j){
         out[j] = 0.0;
         for(int k=num-1;k>=0;--k){//Horner
             out[j] = w*out[j]+in[k];
         }
         w *= w0;
         if(mode)
-            out[j] *= (2.0 /num);
-        else
-            out[j] *= 0.5;
-        if(j) out[num-j] = cmplx(out[j].real(), -out[j].imag());
+            out[j] *= (1.0 /num);
+        
+        //if(j) out[num-j] = cmplx(out[j].real(), -out[j].imag());
     }
     return out;
 }
@@ -144,7 +141,7 @@ int peak(cmplx *data, int num){
     return k;
 }
 
-/* test
+
  
 int main(int argc, char *argv[]){
 
@@ -153,31 +150,29 @@ int main(int argc, char *argv[]){
     unsigned int num = 64;
     cout<<"input the 2-power:\n";
     std::cin>>num;
-    num = 1<<ord2(num);
-    cout<<"input the test pos<"<<num<<":\n";
-    std::cin>>d;
+    unsigned int ord = ord2(num);
+    num = 1<<ord;
     cmplx *in = new cmplx[num];
    
     for(int k=0;k<num;++k){
-        in[k] = 100*sin(2*M_PI/num * k * d);
-         if(k%16==0)cout<<in[k];
+        in[k] = k*2;//100*sin(2*M_PI/num * k * d);
+                    //if(k%16==0)cout<<in[k];
     }
     cmplx *test = dft(in, num);
-    cout<<std::endl;
+    cout<<'\n';
     cmplx *out = fft(in, num);//should be deleted
-    unsigned int ord = ord2(num);
-    num = 1<<ord;
-    cmplx *back = fft(out, num, -1);
     
-    cout<<"OUT: "<<out[num-d]<<'\t'<<out[d]<<'\t'<<out[d+1]<<'\n';
-    int g = peak(out, num);
-    cout<< "at "<<g <<'\n';
+    cmplx *back = fft(out, num, false);
+    for(int i=0;i<num;++i){
+        cout<<in[i]<<"OUT:"<<out[i]<<"TEST:"<<test[i]<<'\n'<<back[i]<<'\n';
+    }
+    //cout<<"OUT: "<<out[num-d]<<'\t'<<out[d]<<'\t'<<out[d+1]<<'\n';
     
-    cout<<"TEST: "<<test[num-d]<<'\t'<<test[d]<<'\t'<<test[d+1]<<'\n';
-    g = peak(test, num);
-    cout<<"at "<<g <<'\n';
+    //cout<<"TEST: "<<test[num-d]<<'\t'<<test[d]<<'\t'<<test[d+1]<<'\n';
+    //g = peak(test, num);
+    //cout<<"at "<<g <<'\n';
     delete []out; delete []back; delete []test; delete[]in;
 
     return 0;
 }
- */
+
