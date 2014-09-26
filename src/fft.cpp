@@ -79,7 +79,37 @@ T * fml(T *in, unsigned int num){//formalize to 2-power and bit-reverse
 cmplx e_i(int m){//e^(2PI*i/m)
     return cmplx(cos(2*M_PI/m),sin(2*M_PI/m));
 }
-
+cmplx * fft(cmplx *data, unsigned int num, bool mode){//test passed
+    //step1: add 0's and reverse bits (eg. 0001<->1000)
+    unsigned short ord = ord2(num);
+    cmplx *out = new cmplx[1<<ord];
+    for(unsigned int i=0;i<num;++i)
+    out[bitrev(i, ord)] = data[i];//copy
+    num = 1<<ord;
+    cmplx t, u, w, wm;
+    unsigned int m = 1;
+    //step2: butterfly operation
+    for(unsigned short s = 1; s <= ord; ++s){ //iterative tree depth
+        m = 1<<s;                      //length of each operation group
+        wm = mode? e_i(m): e_i(-m);           //rotating factor
+        for(unsigned int k = 0; k < num; k += m)//each layer
+        {
+            w = cmplx(1.0,0.0);
+            for(unsigned int j = 0; j< (m>>1); ++j){//butterfly
+                t = w * out[k+j+(m>>1)];
+                u = out[k+j];
+                out[k+j] = u+t;
+                out[k+j+(m>>1)] = u-t;
+                w *= wm;
+            }
+        }
+    }
+    if(mode)// not inverse
+    for(unsigned int k=0;k<num;++k)
+    out[k] = out[k] / (cmplx)num  ;//normalize
+    return out;
+}
+/*
 cmplx *fft(cmplx *in, unsigned int num, bool mode){//iterative
     
     cmplx *out = fml(in, num);
@@ -109,7 +139,7 @@ cmplx *fft(cmplx *in, unsigned int num, bool mode){//iterative
         }
     
     return out;
-}
+}*/
 cmplx *dft(cmplx *in, unsigned int num, bool mode){//accurate
     cmplx *out = new cmplx[num];
     cmplx w0 = mode? e_i(num): e_i(-num);
